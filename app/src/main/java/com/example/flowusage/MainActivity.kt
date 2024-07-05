@@ -12,7 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.flowusage.repository.DataProducer
 import com.example.flowusage.repository.Listener
+import com.example.flowusage.repository.NameInfoRepository
 import com.example.flowusage.ui.theme.FlowUsageTheme
+import com.example.flowusage.usecase.GetHobbyUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.awaitClose
@@ -26,6 +28,9 @@ import kotlinx.coroutines.launch
 private lateinit var callbackForFlow: Callback<Int>
 
 class MainActivity : ComponentActivity() {
+
+    val nameInfoRepo by lazy { NameInfoRepository() }
+    val getHobbyUseCase by lazy { GetHobbyUseCase(nameInfoRepo) }
 
     private val listener: Listener = object : Listener {
         override fun updateDataFromIO(newValue: Int) {
@@ -53,6 +58,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Greeting("Android")
                     collectTheCallback()
+                    randomHobby(getHobbyUseCase)
                 }
             }
         }
@@ -91,6 +97,17 @@ fun collectTheCallback() {
     GlobalScope.launch(Dispatchers.IO) {
         tryCallbackFlow().collect() {
             println("******* the collect data is $it")
+        }
+    }
+}
+
+fun randomHobby(hobbyUseCase: GetHobbyUseCase) {
+    GlobalScope.launch {
+        for (i in 1..5) {
+            hobbyUseCase.invoke().collect {
+                //delay(100)
+                println("FLOW**, Collected value is $it")
+            }
         }
     }
 }
